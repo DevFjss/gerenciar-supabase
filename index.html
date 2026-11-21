@@ -1,0 +1,2138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Projeto Supabase Manutenção — Visualizador e Editor Supabase</title>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --accent: #059669;
+      --accent-hover: #047857;
+      --accent-soft: #ecfdf5;
+      --accent-border: #10b981;
+      --accent-badge: #d1fae5;
+      --danger: #dc2626;
+      --menu-bg: #0f172a;
+      --menu-surface: #1e293b;
+      --menu-border: #334155;
+      --menu-text: #f8fafc;
+      --menu-muted: #94a3b8;
+      --header-bg: #ffffff;
+      --header-text: #0f172a;
+      --header-meta: #64748b;
+      --header-border: #e2e8f0;
+      --th-bg: #1e293b;
+      --th-text: #ffffff;
+      --th-border: #334155;
+      --row-hover: #f1f5f9;
+      --row-selected: #ecfdf5;
+      --table-font-size: 13px;
+    }
+
+    /* Aba FAED PENAE: Cabeçalho Azul Marinho e Fonte Branca */
+    body.theme-blue {
+      --bg: #eff6ff;
+      --surface: #ffffff;
+      --border: #bfdbfe;
+      --text: #0f172a;
+      --muted: #475569;
+      --accent: #1851ba;
+      --accent-hover: #133f91;
+      --accent-soft: #dbeafe;
+      --accent-border: #3b82f6;
+      --accent-badge: #dbeafe;
+      --menu-bg: #0b1d3a;
+      --menu-surface: #132d57;
+      --menu-border: #1e3f73;
+      --menu-text: #f8fafc;
+      --menu-muted: #93c5fd;
+      --header-bg: #0c234b;
+      --header-text: #ffffff;
+      --header-meta: #bfdbfe;
+      --header-border: #1851ba;
+      --th-bg: #0c234b;
+      --th-text: #ffffff;
+      --th-border: #1e3f73;
+      --row-hover: #eff6ff;
+      --row-selected: #dbeafe;
+    }
+
+    /* Modo Escuro — Aba Manutenção */
+    body.dark-mode {
+      --bg: #090d16;
+      --surface: #111827;
+      --border: #1f2937;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #10b981;
+      --accent-hover: #059669;
+      --accent-soft: #064e3b;
+      --accent-border: #34d399;
+      --accent-badge: #065f46;
+      --menu-bg: #05080f;
+      --menu-surface: #111827;
+      --menu-border: #1f2937;
+      --header-bg: #111827;
+      --header-text: #f8fafc;
+      --header-meta: #94a3b8;
+      --header-border: #1f2937;
+      --th-bg: #0f172a;
+      --th-text: #ffffff;
+      --th-border: #334155;
+      --row-hover: #1e293b;
+      --row-selected: #064e3b;
+    }
+
+    /* Modo Escuro — Aba FAED PENAE (mantendo cabeçalho azul marinho e fonte branca) */
+    body.theme-blue.dark-mode {
+      --bg: #070e1d;
+      --surface: #0f1b33;
+      --border: #1e3a6e;
+      --text: #f1f5f9;
+      --muted: #93c5fd;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --accent-soft: #172e5c;
+      --accent-border: #60a5fa;
+      --accent-badge: #1e3a8a;
+      --menu-bg: #060d1c;
+      --menu-surface: #0f1f40;
+      --menu-border: #1e3a6e;
+      --header-bg: #091b3e;
+      --header-text: #ffffff;
+      --header-meta: #bfdbfe;
+      --header-border: #2563eb;
+      --th-bg: #091b3e;
+      --th-text: #ffffff;
+      --th-border: #1e3a6e;
+      --row-hover: #15284d;
+      --row-selected: #17336b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      overflow-y: auto;
+      transition: background-color 0.18s ease, color 0.18s ease;
+    }
+
+    /* Barra de abas e tema no topo */
+    .project-tabs-bar {
+      background: #0f172a;
+      border-bottom: 1px solid #1e293b;
+      padding: 8px 24px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    body.theme-blue .project-tabs-bar {
+      background: #07142b;
+      border-bottom-color: #1851ba;
+    }
+    .tabs-left {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .tabs-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 6px;
+    }
+    .project-tab {
+      background: #1e293b;
+      color: #cbd5e1;
+      border: 1px solid #334155;
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      position: relative;
+      top: 1px;
+      transition: all 0.15s ease;
+    }
+    .project-tab:hover {
+      background: #334155;
+      color: #ffffff;
+    }
+    .project-tab.active[data-project="manut"] {
+      background: #059669;
+      border-color: #059669;
+      color: #ffffff;
+    }
+    .project-tab.active[data-project="faed_pnae"] {
+      background: #1851ba;
+      border-color: #1851ba;
+      color: #ffffff;
+    }
+    .tab-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.85;
+    }
+    .theme-toggle-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #f8fafc;
+      border-radius: 6px;
+      padding: 5px 11px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .theme-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+    }
+
+    header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      border-bottom: 1px solid var(--header-border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      transition: background-color 0.18s ease, color 0.18s ease;
+    }
+    .brand { font-size: 15px; font-weight: 700; color: var(--header-text); }
+    .meta { font-size: 12px; color: var(--muted); font-family: ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+    header .meta { color: var(--header-meta); }
+
+    .layout {
+      display: flex;
+      align-items: stretch;
+      min-height: calc(100vh - 93px);
+    }
+    aside {
+      width: 310px;
+      min-width: 220px;
+      max-width: 600px;
+      background: var(--menu-bg);
+      color: var(--menu-text);
+      border-right: 1px solid var(--menu-border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      position: relative;
+      transition: background-color 0.18s ease;
+    }
+    aside.collapsed {
+      width: 54px !important;
+      min-width: 54px !important;
+      align-items: center;
+      padding: 12px 6px;
+    }
+    .aside-resizer {
+      position: absolute;
+      top: 0;
+      right: -3px;
+      width: 7px;
+      height: 100%;
+      cursor: col-resize;
+      z-index: 20;
+      background: transparent;
+      transition: background-color 0.15s ease;
+    }
+    .aside-resizer:hover,
+    .aside-resizer.dragging {
+      background: var(--accent);
+    }
+    aside.collapsed .aside-resizer {
+      display: none;
+    }
+
+    .aside-top {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--menu-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    aside.collapsed .aside-top {
+      padding: 0;
+      border-bottom: none;
+      justify-content: center;
+      width: 100%;
+    }
+    .aside-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    aside.collapsed .aside-title,
+    aside.collapsed .aside-body,
+    aside.collapsed .aside-footer {
+      display: none;
+    }
+    .collapse-btn {
+      background: var(--menu-surface);
+      border: 1px solid var(--menu-border);
+      color: #e2e8f0;
+      border-radius: 6px;
+      padding: 5px 9px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .collapse-btn:hover { background: var(--accent); border-color: var(--accent); color: #ffffff; }
+    .aside-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+      overflow-y: auto;
+    }
+    .aside-footer {
+      padding: 14px 16px;
+      border-top: 1px solid var(--menu-border);
+    }
+    .token-box {
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid var(--menu-border);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .menu-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 5px;
+    }
+    .menu-help {
+      font-size: 11px;
+      color: var(--menu-muted);
+      line-height: 1.4;
+    }
+    .row-form { display: flex; gap: 6px; align-items: center; }
+    input, select, button, textarea {
+      font: inherit;
+      font-size: 13px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      padding: 7px 10px;
+    }
+    aside input[type="text"],
+    aside input[type="password"],
+    aside input[type="search"],
+    aside select {
+      width: 100%;
+      background: #020617;
+      border-color: var(--menu-border);
+      color: #f8fafc;
+      font-size: 12px;
+    }
+    aside input::placeholder { color: #64748b; }
+    main input[type="text"],
+    main input[type="search"],
+    main select,
+    main textarea {
+      width: 100%;
+      background: var(--surface);
+      color: var(--text);
+      border-color: var(--border);
+    }
+    input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      padding: 0;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: -1px;
+    }
+    button {
+      cursor: pointer;
+      background: var(--surface);
+      color: var(--text);
+      border-color: var(--border);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    button:hover { background: var(--row-hover); }
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    button.primary:hover { background: var(--accent-hover); }
+    button.menu-btn {
+      background: var(--menu-surface);
+      border-color: var(--menu-border);
+      color: #e2e8f0;
+      font-size: 12px;
+    }
+    button.menu-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button.danger {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: var(--danger);
+    }
+    button.danger:hover { background: #fee2e2; }
+    body.dark-mode button.danger {
+      background: #450a0a;
+      border-color: #7f1d1d;
+      color: #fca5a5;
+    }
+    body.dark-mode button.danger:hover {
+      background: #7f1d1d;
+      color: #ffffff;
+    }
+
+    .token-status {
+      font-size: 11px;
+      padding-top: 6px;
+      border-top: 1px solid var(--menu-border);
+      color: var(--menu-muted);
+    }
+    .token-status.active { color: #6ee7b7; font-weight: 600; }
+    body.theme-blue .token-status.active { color: #93c5fd; }
+
+    .section-toggle {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: #e2e8f0;
+      padding: 4px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .section-toggle:hover { background: transparent; color: #ffffff; }
+    .table-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .table-list.collapsed { display: none; }
+    .table-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .table-btn {
+      flex: 1;
+      min-width: 0;
+      text-align: left;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #cbd5e1;
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-family: ui-monospace, monospace;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .table-btn span:first-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .table-btn:hover { background: var(--menu-surface); color: #ffffff; }
+    .table-btn.active {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent-border);
+      font-weight: 600;
+    }
+    .table-btn .count-txt {
+      font-size: 11px;
+      color: #94a3b8;
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+    }
+    .table-btn.active .count-txt { color: #ffffff; }
+    .remove-tbl-btn {
+      background: transparent;
+      border: none;
+      color: #64748b;
+      padding: 4px 6px;
+      font-size: 12px;
+    }
+    .remove-tbl-btn:hover { background: var(--menu-surface); color: #fda4af; }
+
+    main { flex: 1; padding: 20px 24px; min-width: 0; }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .toolbar-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .toolbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    /* Controle de tamanho da fonte da tabela */
+    .font-control-group {
+      display: inline-flex;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .font-control-group button {
+      border: none;
+      border-radius: 0;
+      padding: 6px 10px;
+      font-weight: 700;
+      font-size: 13px;
+      background: transparent;
+      color: var(--text);
+    }
+    .font-control-group button:hover {
+      background: var(--row-hover);
+      color: var(--accent);
+    }
+    .font-size-badge {
+      padding: 0 8px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: ui-monospace, monospace;
+      color: var(--muted);
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      user-select: none;
+    }
+
+    .edit-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .edit-panel.open { display: block; }
+    .edit-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 10px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .edit-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .edit-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .selection-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 12px;
+    }
+    .selection-bar.open { display: flex; }
+
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: auto;
+      max-height: 67vh;
+    }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: var(--table-font-size);
+    }
+    th, td {
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    th {
+      background: var(--th-bg);
+      font-weight: 600;
+      color: var(--th-text);
+      border-right-color: var(--th-border);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      vertical-align: top;
+    }
+    .th-title {
+      font-family: ui-monospace, monospace;
+      font-size: calc(var(--table-font-size) - 1px);
+      margin-bottom: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      user-select: none;
+      color: var(--th-text);
+    }
+    .th-title:hover { opacity: 0.85; }
+    .col-filter {
+      width: 100%;
+      min-width: 120px;
+      padding: 4px 7px;
+      font-size: 11px;
+      background: var(--surface) !important;
+      color: var(--text) !important;
+      border: 1px solid var(--border) !important;
+    }
+    td {
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      background: var(--surface);
+      color: var(--text);
+    }
+    tr:hover td { background: var(--row-hover); }
+    tr.selected td { background: var(--row-selected); }
+
+    /* Coluna Checkbox FIXA à esquerda */
+    .chk-col {
+      position: sticky;
+      left: 0;
+      width: 38px;
+      min-width: 38px;
+      max-width: 38px;
+      text-align: center;
+      z-index: 2;
+      background: var(--surface);
+      border-right: 2px solid var(--border);
+    }
+    th.chk-col {
+      background: var(--th-bg);
+      z-index: 4;
+      vertical-align: middle;
+      border-right: 2px solid var(--th-border);
+    }
+    tr:hover td.chk-col { background: var(--row-hover); }
+    tr.selected td.chk-col { background: var(--row-selected); }
+
+    /* Coluna Ações FIXA à direita */
+    .actions-col {
+      position: sticky;
+      right: 0;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      text-align: right;
+      z-index: 2;
+    }
+    th.actions-col {
+      background: var(--th-bg);
+      color: var(--th-text);
+      z-index: 4;
+      border-left: 1px solid var(--th-border);
+    }
+    tr:hover td.actions-col { background: var(--row-hover); }
+    tr.selected td.actions-col { background: var(--row-selected); }
+
+    .icon-btn { padding: 4px 8px; font-size: 12px; margin-left: 4px; }
+    .null-val { color: var(--muted); font-style: italic; }
+    .num-val { font-family: ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+    .status-box {
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+    .status-box.error { border-color: #fecaca; background: #fef2f2; color: var(--danger); }
+    .status-box.ok { border-color: #a7f3d0; background: #ecfdf5; color: #065f46; }
+    body.theme-blue .status-box.ok { border-color: #93c5fd; background: #eff6ff; color: #1e40af; }
+    body.dark-mode .status-box.ok { border-color: #065f46; background: #022c22; color: #6ee7b7; }
+    body.theme-blue.dark-mode .status-box.ok { border-color: #1e40af; background: #0c234b; color: #93c5fd; }
+
+    @media (max-width: 820px) {
+      .layout { flex-direction: column; }
+      aside { width: 100% !important; max-width: 100%; border-right: none; border-bottom: 1px solid var(--menu-border); }
+      aside.collapsed { width: 100% !important; height: auto; flex-direction: row; justify-content: space-between; padding: 10px 16px; }
+      .aside-resizer { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="project-tabs-bar" aria-label="Projetos Supabase">
+    <div class="tabs-left">
+      <button type="button" class="project-tab active" data-project="manut" id="tabBtnManut">
+        <span class="tab-dot"></span>
+        <span>Projeto Supabase Manutenção</span>
+      </button>
+      <button type="button" class="project-tab" data-project="faed_pnae" id="tabBtnFaedPnae">
+        <span class="tab-dot"></span>
+        <span>Projeto Supabase FAED PENAE</span>
+      </button>
+    </div>
+    <div class="tabs-right">
+      <button type="button" id="themeToggleBtn" class="theme-toggle-btn" title="Alternar entre Tema Claro e Tema Escuro">
+        <span id="themeToggleIcon">🌙</span>
+        <span id="themeToggleText">Tema Escuro</span>
+      </button>
+    </div>
+  </nav>
+
+  <header>
+    <div class="brand" id="headerBrand">Projeto Supabase Manutenção · Projeto automacao cdf_manut</div>
+    <div class="meta" id="headerMeta">vsubudeifwpdzxwoayij · Supabase REST API</div>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebarAside">
+      <div class="aside-resizer" id="asideResizer" title="Arraste para redimensionar o menu"></div>
+
+      <div class="aside-top">
+        <span class="aside-title">Explorador de Tabelas</span>
+        <button id="toggleSidebarBtn" type="button" class="collapse-btn" title="Recolher ou exibir menu">
+          <span id="toggleSidebarArrow">◀</span>
+          <span id="toggleSidebarText">Recolher</span>
+        </button>
+      </div>
+
+      <div class="aside-body">
+        <div class="token-box">
+          <label class="menu-label" for="customTokenInput" style="margin-bottom:0;">Token de Permissão Supabase</label>
+          <div class="menu-help">Cole o token (Service Role, Secret Key ou JWT) para liberar todas as tabelas e linhas.</div>
+          <form id="tokenForm" style="display:flex; flex-direction:column; gap:7px;">
+            <div class="row-form">
+              <input id="customTokenInput" type="password" placeholder="sb_secret_... ou eyJ..." />
+              <button type="button" id="toggleTokenVisBtn" class="menu-btn" title="Mostrar/ocultar token">👁</button>
+            </div>
+            <label style="display:flex; align-items:center; gap:6px; font-size:11px; color:#cbd5e1; cursor:pointer;">
+              <input id="rememberTokenChk" type="checkbox" checked />
+              <span>Salvar token no navegador</span>
+            </label>
+            <div class="row-form">
+              <button type="submit" class="primary" style="flex:1;">Aplicar Token</button>
+              <button type="button" id="clearTokenBtn" class="menu-btn">Limpar</button>
+            </div>
+          </form>
+          <div id="tokenStatusText" class="token-status">Chave pública padrão (sujeita a RLS)</div>
+        </div>
+
+        <div>
+          <label class="menu-label" for="tableSelect">Seleção rápida (tabelas)</label>
+          <select id="tableSelect"></select>
+        </div>
+
+        <div>
+          <label class="menu-label" for="newTableInput">Adicionar / validar tabela(s)</label>
+          <form class="row-form" id="addTableForm">
+            <input id="newTableInput" type="text" placeholder="tabela1, tabela2..." required />
+            <button type="submit" class="primary">+</button>
+          </form>
+          <div id="validateMsg" class="menu-help" style="margin-top:6px;"></div>
+        </div>
+
+        <div>
+          <div class="menu-label" style="display:flex; justify-content:space-between;">
+            <span>Visualizando / Recentes</span>
+            <span id="recentCount" style="color:#64748b; font-family:ui-monospace,monospace;"></span>
+          </div>
+          <div id="recentList" class="table-list" style="max-height:160px;"></div>
+        </div>
+
+        <div style="border-top: 1px solid var(--menu-border); padding-top: 10px;">
+          <button type="button" id="toggleSavedListBtn" class="section-toggle">
+            <span><span id="savedListArrow">▾</span> Tabelas salvas no navegador</span>
+            <span id="savedListCount" style="font-family:ui-monospace,monospace; color:#94a3b8;">0</span>
+          </button>
+          <div id="savedListContainer" style="margin-top:8px; display:flex; flex-direction:column; gap:6px;">
+            <input id="filterSavedInput" type="search" placeholder="Filtrar lista salva..." />
+            <div class="table-list" id="tableList"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="aside-footer">
+        <button id="scanBtn" type="button" class="menu-btn" style="width:100%;">Revalidar todas as tabelas</button>
+      </div>
+    </aside>
+
+    <main>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <strong id="activeTableTitle" style="font-size:16px;">historico</strong>
+          <span class="meta" id="rowCounter"></span>
+        </div>
+        <div class="toolbar-right">
+          <div class="font-control-group" title="Ajustar tamanho da fonte da tabela">
+            <button type="button" id="fontDecBtn" title="Diminuir fonte">A−</button>
+            <span class="font-size-badge" id="fontSizeLabel">13px</span>
+            <button type="button" id="fontIncBtn" title="Aumentar fonte">A+</button>
+          </div>
+          <input id="searchInput" type="search" placeholder="Busca geral..." style="width: 175px;" />
+          <select id="limitSelect" style="width: auto;">
+            <option value="50">50 linhas</option>
+            <option value="100">100 linhas</option>
+            <option value="500">500 linhas</option>
+            <option value="1000" selected>1000 linhas</option>
+            <option value="ALL">Todas as linhas</option>
+          </select>
+          <button id="newRowBtn" type="button" class="primary">+ Novo</button>
+          <button id="exportExcelBtn" type="button">Exportar Excel</button>
+          <button id="exportCsvBtn" type="button">Exportar CSV</button>
+          <button id="refreshBtn" type="button">Atualizar</button>
+          <button id="prevBtn" type="button">Anterior</button>
+          <button id="nextBtn" type="button">Próxima</button>
+        </div>
+      </div>
+
+      <div id="feedbackArea"></div>
+
+      <div class="selection-bar" id="selectionBar">
+        <span id="selectionCount"></span>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button type="button" id="editSelectedBtn" class="primary">Editar selecionada</button>
+          <button type="button" id="deleteSelectedBtn" class="danger">Excluir selecionadas</button>
+          <button type="button" id="clearSelectionBtn">Limpar seleção</button>
+        </div>
+      </div>
+
+      <section class="edit-panel" id="editPanel">
+        <div class="edit-header">
+          <div>
+            <strong id="editTitle">Editar Registro</strong>
+            <div class="meta" id="editSubtitle"></div>
+          </div>
+          <button type="button" id="closeEditBtn">Fechar</button>
+        </div>
+        <form id="editForm">
+          <div class="edit-grid" id="editGrid"></div>
+          <div class="edit-actions">
+            <div style="display:flex; gap:8px;">
+              <button type="submit" id="editSubmitBtn" class="primary">Atualizar no Supabase</button>
+              <button type="button" id="cancelEditBtn">Cancelar</button>
+            </div>
+            <button type="button" id="editDeleteBtn" class="danger">Excluir Linha</button>
+          </div>
+        </form>
+      </section>
+
+      <div id="contentArea">
+        <div class="status-box">Carregando tabelas validadas do Supabase...</div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const PROJECTS = {
+      manut: {
+        key: 'manut',
+        tabLabel: 'Projeto Supabase Manutenção',
+        projectName: 'Projeto automacao cdf_manut',
+        projectId: 'vsubudeifwpdzxwoayij',
+        restUrl: 'https://vsubudeifwpdzxwoayij.supabase.co/rest/v1/',
+        apiKey: 'sb_publishable_vrBHcx43pZg3MWhYv8Wl-w_hd09KwTP',
+        theme: 'default',
+        defaultTables: [
+          { name: 'historico', count: null },
+          { name: 'usuarios', count: null }
+        ],
+        defaultRecent: ['historico'],
+        defaultActive: 'historico',
+        candidates: [
+          'historico','usuarios','escolas','unidades_escolares','ordens_servico','ordem_servico',
+          'manutencao','manutencoes','equipamentos','chamados','cartoes','diretores','nte',
+          'municipios','preventivas','corretivas','tecnicos','clientes','unidades','setores',
+          'locais','pecas','estoque','ativos','maquinas','automacoes','tarefas','checklists',
+          'inspecoes','validacao','validacoes','lista_validacao','logs','alertas','registros',
+          'relatorios','cdf_manut','configuracoes','profiles','items','tasks','orders'
+        ]
+      },
+      faed_pnae: {
+        key: 'faed_pnae',
+        tabLabel: 'Projeto Supabase FAED PENAE',
+        projectName: 'Projeto automação cdf_FAED_PNAE',
+        projectId: 'sdspabeqnvqkejlrkrcm',
+        restUrl: 'https://sdspabeqnvqkejlrkrcm.supabase.co/rest/v1/',
+        apiKey: 'sb_publishable_tw02D8g0mzHl9578IU4B9w_w82G9c3b',
+        theme: 'blue',
+        defaultTables: [
+          { name: 'historico', count: null },
+          { name: 'pnae', count: null },
+          { name: 'faed', count: null }
+        ],
+        defaultRecent: ['historico'],
+        defaultActive: 'historico',
+        candidates: [
+          'historico','pnae','faed','faed_manutencao','pdde','escolas','unidades_escolares',
+          'cartoes','cartao','portadores','entregas','prestacao_contas','repasses','emendas',
+          'nte','municipios','diretores','usuarios','logs','registros','relatorios','validacao',
+          'validacoes','lista_validacao','configuracoes','cdf_faed_pnae','items','profiles'
+        ]
+      }
+    };
+
+    const STORAGE_ACTIVE_PROJECT_KEY = 'cdf_active_supabase_tab_v1';
+    const STORAGE_DARK_MODE_KEY = 'cdf_dark_mode_v1';
+    const STORAGE_SIDEBAR_KEY = 'cdf_manut_sidebar_collapsed_v1';
+    const STORAGE_SIDEBAR_WIDTH_KEY = 'cdf_sidebar_width_v1';
+    const STORAGE_SAVED_COLLAPSED_KEY = 'cdf_manut_saved_list_collapsed_v1';
+
+    function loadJSON(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch { return fallback; }
+    }
+
+    function saveJSON(key, val) {
+      try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+    }
+
+    function createProjectState(cfg) {
+      const prefix = 'cdf_proj_' + cfg.key + '_';
+      const tablesKey = prefix + 'tables_v2';
+      const recentKey = prefix + 'recent_v1';
+      const tokenKey = prefix + 'custom_token_v1';
+      const rememberTokenKey = prefix + 'remember_token_v1';
+      const fontSizeKey = prefix + 'table_font_size_v1';
+
+      const rememberTokenInit = localStorage.getItem(rememberTokenKey) !== 'false';
+      const savedTokenInit = rememberTokenInit ? (localStorage.getItem(tokenKey) || '') : '';
+      const tablesInit = loadJSON(tablesKey, cfg.defaultTables.map((t) => ({ ...t })));
+      const recentInit = loadJSON(recentKey, [...cfg.defaultRecent]);
+      const savedFont = Number(localStorage.getItem(fontSizeKey));
+      const fontSizeInit = (!Number.isNaN(savedFont) && savedFont >= 10 && savedFont <= 24) ? savedFont : 13;
+
+      let activeInit = cfg.defaultActive;
+      if (tablesInit.length > 0 && !tablesInit.some((t) => t.name === activeInit)) {
+        activeInit = tablesInit[0].name;
+      }
+
+      return {
+        cfg,
+        keys: { tablesKey, recentKey, tokenKey, rememberTokenKey, fontSizeKey },
+        tables: tablesInit,
+        recentTables: recentInit,
+        activeTable: activeInit,
+        customToken: savedTokenInit,
+        rememberToken: rememberTokenInit,
+        tableFontSize: fontSizeInit,
+        validateMsg: '',
+        rows: [],
+        columns: [],
+        totalCount: null,
+        offset: 0,
+        limit: 1000,
+        fetchAll: false,
+        search: '',
+        colFilters: {},
+        sortCol: null,
+        sortDir: null,
+        selectedKeys: new Set(),
+        formMode: 'edit',
+        editingRow: null,
+        pkCol: null,
+        confirmDeleteKey: null,
+        discoveredOnce: false
+      };
+    }
+
+    const projectStates = {
+      manut: createProjectState(PROJECTS.manut),
+      faed_pnae: createProjectState(PROJECTS.faed_pnae)
+    };
+
+    const savedProjectKey = localStorage.getItem(STORAGE_ACTIVE_PROJECT_KEY);
+    let currentProjectKey = (savedProjectKey && projectStates[savedProjectKey]) ? savedProjectKey : 'manut';
+
+    const savedWidth = Number(localStorage.getItem(STORAGE_SIDEBAR_WIDTH_KEY));
+    const uiState = {
+      darkMode: localStorage.getItem(STORAGE_DARK_MODE_KEY) === 'true',
+      sidebarCollapsed: localStorage.getItem(STORAGE_SIDEBAR_KEY) === 'true',
+      sidebarWidth: (!Number.isNaN(savedWidth) && savedWidth >= 220 && savedWidth <= 600) ? savedWidth : 310,
+      savedListCollapsed: localStorage.getItem(STORAGE_SAVED_COLLAPSED_KEY) === 'true',
+      savedFilter: ''
+    };
+
+    function getProj() {
+      return projectStates[currentProjectKey];
+    }
+
+    function applyTableFontSize() {
+      const p = getProj();
+      document.documentElement.style.setProperty('--table-font-size', p.tableFontSize + 'px');
+      document.getElementById('fontSizeLabel').textContent = p.tableFontSize + 'px';
+    }
+
+    function applyProjectThemeAndHeader() {
+      const p = getProj();
+      const isBlue = p.cfg.theme === 'blue';
+      document.body.classList.toggle('theme-blue', isBlue);
+      document.body.classList.toggle('dark-mode', uiState.darkMode);
+
+      const themeIcon = document.getElementById('themeToggleIcon');
+      const themeText = document.getElementById('themeToggleText');
+      if (uiState.darkMode) {
+        themeIcon.textContent = '☀️';
+        themeText.textContent = 'Tema Claro';
+      } else {
+        themeIcon.textContent = '🌙';
+        themeText.textContent = 'Tema Escuro';
+      }
+
+      document.getElementById('tabBtnManut').classList.toggle('active', currentProjectKey === 'manut');
+      document.getElementById('tabBtnFaedPnae').classList.toggle('active', currentProjectKey === 'faed_pnae');
+
+      document.title = p.cfg.tabLabel + ' — Visualizador e Editor Supabase';
+      document.getElementById('headerBrand').textContent = p.cfg.tabLabel + ' · ' + p.cfg.projectName;
+      document.getElementById('headerMeta').textContent = p.cfg.projectId + ' · Supabase REST API';
+      applyTableFontSize();
+    }
+
+    function decodeJwtRole(token) {
+      try {
+        const parts = token.split('.');
+        if (parts.length !== 3) return null;
+        const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+        return typeof payload.role === 'string' ? payload.role : null;
+      } catch { return null; }
+    }
+
+    function buildHeaders(extra) {
+      const p = getProj();
+      const clean = (p.customToken || '').trim();
+      const h = Object.assign({ Accept: 'application/json' }, extra || {});
+      if (!clean) {
+        h.apikey = p.cfg.apiKey;
+        return h;
+      }
+      if (clean.startsWith('eyJ')) {
+        const role = decodeJwtRole(clean);
+        h.apikey = (role === 'service_role' || role === 'anon') ? clean : p.cfg.apiKey;
+        h.Authorization = 'Bearer ' + clean;
+        return h;
+      }
+      h.apikey = clean;
+      return h;
+    }
+
+    function updateTokenUI() {
+      const p = getProj();
+      const inp = document.getElementById('customTokenInput');
+      const chk = document.getElementById('rememberTokenChk');
+      const st = document.getElementById('tokenStatusText');
+      inp.value = p.customToken;
+      chk.checked = p.rememberToken;
+      const clean = (p.customToken || '').trim();
+      if (!clean) {
+        st.textContent = 'Chave pública padrão (sujeita a RLS)';
+        st.className = 'token-status';
+      } else if (clean.startsWith('sb_secret_')) {
+        st.textContent = 'Secret Key ativa (acesso total)';
+        st.className = 'token-status active';
+      } else if (clean.startsWith('eyJ')) {
+        const role = decodeJwtRole(clean);
+        st.textContent = role === 'service_role' ? 'Service Role JWT ativo (acesso total)' : 'Token JWT personalizado ativo';
+        st.className = 'token-status active';
+      } else {
+        st.textContent = 'Token personalizado ativo';
+        st.className = 'token-status active';
+      }
+    }
+
+    function updateSidebarUI() {
+      const aside = document.getElementById('sidebarAside');
+      const arrow = document.getElementById('toggleSidebarArrow');
+      const txt = document.getElementById('toggleSidebarText');
+      if (uiState.sidebarCollapsed) {
+        aside.classList.add('collapsed');
+        arrow.textContent = '▶';
+        txt.style.display = 'none';
+      } else {
+        aside.classList.remove('collapsed');
+        aside.style.width = uiState.sidebarWidth + 'px';
+        arrow.textContent = '◀';
+        txt.style.display = 'inline';
+      }
+      const savedContainer = document.getElementById('savedListContainer');
+      const savedArrow = document.getElementById('savedListArrow');
+      if (uiState.savedListCollapsed) {
+        savedContainer.style.display = 'none';
+        savedArrow.textContent = '▸';
+      } else {
+        savedContainer.style.display = 'flex';
+        savedArrow.textContent = '▾';
+      }
+    }
+
+    /* Redimensionamento arrastável do menu lateral nas duas abas */
+    (function initSidebarResizer() {
+      const aside = document.getElementById('sidebarAside');
+      const resizer = document.getElementById('asideResizer');
+      let isResizing = false;
+
+      resizer.addEventListener('mousedown', (e) => {
+        if (uiState.sidebarCollapsed) return;
+        isResizing = true;
+        resizer.classList.add('dragging');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+        const rect = aside.getBoundingClientRect();
+        let newWidth = Math.round(e.clientX - rect.left);
+        if (newWidth < 220) newWidth = 220;
+        if (newWidth > 600) newWidth = 600;
+        uiState.sidebarWidth = newWidth;
+        aside.style.width = newWidth + 'px';
+      });
+
+      document.addEventListener('mouseup', () => {
+        if (!isResizing) return;
+        isResizing = false;
+        resizer.classList.remove('dragging');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        localStorage.setItem(STORAGE_SIDEBAR_WIDTH_KEY, String(uiState.sidebarWidth));
+      });
+    })();
+
+    function showFeedback(msg, type) {
+      const el = document.getElementById('feedbackArea');
+      if (!msg) { el.innerHTML = ''; return; }
+      el.innerHTML = '<div class="status-box ' + (type || '') + '">' + msg + '</div>';
+    }
+
+    function getPkCol(row) {
+      if (!row) return null;
+      if (row.id !== undefined && row.id !== null) return 'id';
+      const keys = Object.keys(row);
+      return keys.length ? keys[0] : null;
+    }
+
+    function getRowKey(row, idx) {
+      const pk = getPkCol(row);
+      if (pk && row[pk] !== undefined && row[pk] !== null) return pk + ':' + row[pk];
+      return 'idx:' + idx;
+    }
+
+    function selectTable(name) {
+      const p = getProj();
+      p.activeTable = name;
+      p.recentTables = [name, ...p.recentTables.filter((t) => t !== name)].slice(0, 6);
+      saveJSON(p.keys.recentKey, p.recentTables);
+      p.offset = 0;
+      p.colFilters = {};
+      p.sortCol = null;
+      p.sortDir = null;
+      p.selectedKeys.clear();
+      p.editingRow = null;
+      p.confirmDeleteKey = null;
+      document.getElementById('editPanel').classList.remove('open');
+      renderTableSelector();
+      loadTableData();
+    }
+
+    function renderTableSelector() {
+      const p = getProj();
+      const selectEl = document.getElementById('tableSelect');
+      const listEl = document.getElementById('tableList');
+      const recentEl = document.getElementById('recentList');
+      const countMap = new Map(p.tables.map((t) => [t.name, t.count]));
+
+      selectEl.innerHTML = '';
+      listEl.innerHTML = '';
+      recentEl.innerHTML = '';
+
+      document.getElementById('validateMsg').textContent = p.validateMsg || '';
+      document.getElementById('savedListCount').textContent = String(p.tables.length);
+      const recents = Array.from(new Set([p.activeTable, ...p.recentTables])).filter(Boolean).slice(0, 6);
+      document.getElementById('recentCount').textContent = String(recents.length);
+
+      recents.forEach((name) => {
+        const c = countMap.get(name);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'table-btn' + (name === p.activeTable ? ' active' : '');
+        btn.innerHTML = '<span>' + name + (name === p.activeTable ? ' · atual' : '') + '</span><span class="count-txt">' + (c !== null && c !== undefined ? c : '') + '</span>';
+        btn.onclick = () => selectTable(name);
+        recentEl.appendChild(btn);
+      });
+
+      p.tables.forEach((item) => {
+        const opt = document.createElement('option');
+        opt.value = item.name;
+        opt.textContent = item.count !== null ? item.name + ' (' + item.count + ')' : item.name;
+        if (item.name === p.activeTable) opt.selected = true;
+        selectEl.appendChild(opt);
+      });
+
+      const term = uiState.savedFilter.trim().toLowerCase();
+      const filtered = term ? p.tables.filter((t) => t.name.toLowerCase().includes(term)) : p.tables;
+
+      filtered.forEach((item) => {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'table-item';
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'table-btn' + (item.name === p.activeTable ? ' active' : '');
+        btn.innerHTML = '<span>' + item.name + '</span><span class="count-txt">' + (item.count !== null ? item.count : '') + '</span>';
+        btn.onclick = () => selectTable(item.name);
+        rowDiv.appendChild(btn);
+
+        if (p.tables.length > 1) {
+          const delBtn = document.createElement('button');
+          delBtn.type = 'button';
+          delBtn.className = 'remove-tbl-btn';
+          delBtn.textContent = '×';
+          delBtn.title = 'Remover da lista';
+          delBtn.onclick = () => {
+            p.tables = p.tables.filter((t) => t.name !== item.name);
+            saveJSON(p.keys.tablesKey, p.tables);
+            if (p.activeTable === item.name && p.tables.length > 0) {
+              selectTable(p.tables[0].name);
+            } else {
+              renderTableSelector();
+            }
+          };
+          rowDiv.appendChild(delBtn);
+        }
+        listEl.appendChild(rowDiv);
+      });
+    }
+
+    async function discoverAllTables(targetProjKey) {
+      const pKey = targetProjKey || currentProjectKey;
+      const p = projectStates[pKey];
+      const msgEl = document.getElementById('validateMsg');
+      p.validateMsg = 'Validando tabelas...';
+      if (pKey === currentProjectKey) msgEl.textContent = p.validateMsg;
+      const oldCounts = new Map(p.tables.map((t) => [t.name, t.count]));
+
+      try {
+        const openRes = await fetch(p.cfg.restUrl, {
+          headers: buildHeaders({ Accept: 'application/openapi+json' })
+        });
+        if (openRes.ok) {
+          const spec = await openRes.json();
+          const paths = Object.keys(spec.paths || {}).filter((pathStr) => pathStr !== '/' && !pathStr.startsWith('/rpc/'));
+          if (paths.length > 0) {
+            p.tables = Array.from(new Set(paths.map((pathStr) => pathStr.replace(/^\//, '')))).sort()
+              .map((name) => ({ name, count: oldCounts.get(name) ?? null }));
+            saveJSON(p.keys.tablesKey, p.tables);
+            if (!p.tables.some((t) => t.name === p.activeTable)) {
+              p.activeTable = p.tables[0].name;
+            }
+            p.discoveredOnce = true;
+            p.validateMsg = p.tables.length + ' tabelas carregadas via OpenAPI.';
+            if (pKey === currentProjectKey) {
+              renderTableSelector();
+              msgEl.textContent = p.validateMsg;
+              loadTableData();
+            }
+            return;
+          }
+        }
+      } catch {}
+
+      for (const fn of ['listar_tabelas', 'get_tables']) {
+        try {
+          const rpcRes = await fetch(p.cfg.restUrl + 'rpc/' + fn, { headers: buildHeaders() });
+          if (rpcRes.ok) {
+            const list = await rpcRes.json();
+            if (Array.isArray(list) && list.length > 0) {
+              const names = list.map((x) => typeof x === 'string' ? x : (x.table_name || x.tablename || Object.values(x)[0])).filter(Boolean);
+              p.tables = Array.from(new Set(names)).sort().map((name) => ({ name, count: oldCounts.get(name) ?? null }));
+              saveJSON(p.keys.tablesKey, p.tables);
+              if (!p.tables.some((t) => t.name === p.activeTable)) {
+                p.activeTable = p.tables[0].name;
+              }
+              p.discoveredOnce = true;
+              p.validateMsg = p.tables.length + ' tabelas carregadas via RPC.';
+              if (pKey === currentProjectKey) {
+                renderTableSelector();
+                msgEl.textContent = p.validateMsg;
+                loadTableData();
+              }
+              return;
+            }
+          }
+        } catch {}
+      }
+
+      const allToCheck = Array.from(new Set([...p.tables.map((t) => t.name), ...p.cfg.candidates]));
+      const valid = [];
+      for (let i = 0; i < allToCheck.length; i += 8) {
+        const batch = allToCheck.slice(i, i + 8);
+        await Promise.all(batch.map(async (name) => {
+          try {
+            const r = await fetch(p.cfg.restUrl + encodeURIComponent(name) + '?limit=1', {
+              headers: buildHeaders({ Prefer: 'count=exact' })
+            });
+            if (r.ok) {
+              const cr = r.headers.get('content-range');
+              const total = cr && cr.includes('/') ? Number(cr.split('/')[1]) : null;
+              valid.push({ name, count: Number.isNaN(total) ? null : total });
+            }
+          } catch {}
+        }));
+      }
+
+      p.discoveredOnce = true;
+      if (valid.length > 0) {
+        valid.sort((a, b) => a.name.localeCompare(b.name));
+        p.tables = valid;
+        saveJSON(p.keys.tablesKey, p.tables);
+        if (!valid.some((t) => t.name === p.activeTable)) {
+          p.activeTable = valid[0].name;
+        }
+        p.validateMsg = valid.length + ' tabelas validadas.';
+        if (pKey === currentProjectKey) {
+          renderTableSelector();
+          msgEl.textContent = p.validateMsg;
+          loadTableData();
+        }
+      } else {
+        p.validateMsg = 'Nenhuma tabela adicional encontrada.';
+        if (pKey === currentProjectKey) {
+          msgEl.textContent = p.validateMsg;
+          loadTableData();
+        }
+      }
+    }
+
+    async function loadTableData(targetProjKey) {
+      const pKey = targetProjKey || currentProjectKey;
+      const p = projectStates[pKey];
+      if (pKey !== currentProjectKey) return;
+
+      const titleEl = document.getElementById('activeTableTitle');
+      const counterEl = document.getElementById('rowCounter');
+      const contentEl = document.getElementById('contentArea');
+
+      titleEl.textContent = p.activeTable;
+      counterEl.textContent = 'Carregando...';
+      showFeedback('', '');
+      contentEl.innerHTML = '<div class="status-box">Consultando Supabase (' + p.cfg.projectId + ')...</div>';
+
+      try {
+        let loadedRows = [];
+        let totalCount = null;
+
+        if (p.fetchAll) {
+          let offset = 0;
+          const batchSize = 1000;
+          while (true) {
+            const url = p.cfg.restUrl + encodeURIComponent(p.activeTable) +
+              '?select=*&limit=' + batchSize + '&offset=' + offset;
+            const res = await fetch(url, { headers: buildHeaders({ Prefer: 'count=exact' }) });
+            const cr = res.headers.get('content-range');
+            if (totalCount === null && cr && cr.includes('/')) {
+              const tot = cr.split('/')[1];
+              totalCount = tot === '*' ? null : Number(tot);
+            }
+            const data = await res.json();
+            if (pKey !== currentProjectKey) return;
+            if (!res.ok) {
+              counterEl.textContent = 'Erro HTTP ' + res.status;
+              contentEl.innerHTML = '<div class="status-box error">' + (data.message || 'Erro ao consultar tabela.') + '</div>';
+              return;
+            }
+            const chunk = Array.isArray(data) ? data : [];
+            loadedRows = loadedRows.concat(chunk);
+            contentEl.innerHTML = '<div class="status-box">Carregando ' + loadedRows.length + (totalCount ? ' de ' + totalCount : '') + ' linhas...</div>';
+            if (chunk.length < batchSize) break;
+            if (totalCount !== null && loadedRows.length >= totalCount) break;
+            offset += batchSize;
+            if (offset >= 50000) break;
+          }
+          p.totalCount = totalCount ?? loadedRows.length;
+        } else {
+          const url = p.cfg.restUrl + encodeURIComponent(p.activeTable) +
+            '?select=*&limit=' + p.limit + '&offset=' + p.offset;
+          const res = await fetch(url, { headers: buildHeaders({ Prefer: 'count=exact' }) });
+          const cr = res.headers.get('content-range');
+          if (cr && cr.includes('/')) {
+            const tot = cr.split('/')[1];
+            p.totalCount = tot === '*' ? null : Number(tot);
+          } else {
+            p.totalCount = null;
+          }
+          const data = await res.json();
+          if (pKey !== currentProjectKey) return;
+          if (!res.ok) {
+            counterEl.textContent = 'Erro HTTP ' + res.status;
+            contentEl.innerHTML = '<div class="status-box error">' + (data.message || 'Erro ao consultar tabela.') + '</div>';
+            return;
+          }
+          loadedRows = Array.isArray(data) ? data : [];
+        }
+
+        p.rows = loadedRows;
+        p.columns = Array.from(new Set(p.rows.flatMap((r) => Object.keys(r))));
+        const target = p.tables.find((t) => t.name === p.activeTable);
+        if (target && p.totalCount !== null) {
+          target.count = p.totalCount;
+          saveJSON(p.keys.tablesKey, p.tables);
+          renderTableSelector();
+        }
+        renderGridStructure();
+        renderTableBody();
+      } catch (err) {
+        if (pKey !== currentProjectKey) return;
+        counterEl.textContent = 'Falha de rede';
+        contentEl.innerHTML = '<div class="status-box error">Erro de conexão: ' + err.message + '</div>';
+      }
+    }
+
+    function getFilteredEntries() {
+      const p = getProj();
+      const term = p.search.trim().toLowerCase();
+      const activeColFilters = Object.entries(p.colFilters).filter((e) => e[1].trim() !== '');
+
+      let list = p.rows
+        .map((row, idx) => ({ row, key: getRowKey(row, idx) }))
+        .filter(({ row }) => {
+          if (term) {
+            const matchGlobal = Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(term));
+            if (!matchGlobal) return false;
+          }
+          for (const [col, txt] of activeColFilters) {
+            const val = row[col];
+            const str = val === null || val === undefined ? 'null' : typeof val === 'object' ? JSON.stringify(val) : String(val);
+            if (!str.toLowerCase().includes(txt.trim().toLowerCase())) return false;
+          }
+          return true;
+        });
+
+      if (p.sortCol && p.sortDir) {
+        const col = p.sortCol;
+        const mult = p.sortDir === 'asc' ? 1 : -1;
+        list = list.slice().sort((a, b) => {
+          const va = a.row[col];
+          const vb = b.row[col];
+          if (va === vb) return 0;
+          if (va === null || va === undefined) return 1;
+          if (vb === null || vb === undefined) return -1;
+          if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * mult;
+          return String(va).localeCompare(String(vb), 'pt-BR', { numeric: true }) * mult;
+        });
+      }
+      return list;
+    }
+
+    function renderGridStructure() {
+      const p = getProj();
+      const contentEl = document.getElementById('contentArea');
+      if (p.columns.length === 0) {
+        contentEl.innerHTML = '<div class="status-box">Tabela vazia ou sem colunas retornadas. Se houver RLS ativa, cole seu Token de Permissão no menu lateral.</div>';
+        return;
+      }
+
+      const wrap = document.createElement('div');
+      wrap.className = 'table-wrap';
+      const table = document.createElement('table');
+      const thead = document.createElement('thead');
+      const tr = document.createElement('tr');
+
+      /* Checkbox fixa à esquerda no cabeçalho */
+      const thChk = document.createElement('th');
+      thChk.className = 'chk-col';
+      const selectAllChk = document.createElement('input');
+      selectAllChk.type = 'checkbox';
+      selectAllChk.id = 'selectAllChk';
+      selectAllChk.title = 'Marcar / desmarcar todas as linhas exibidas';
+      selectAllChk.onchange = () => {
+        const cur = getProj();
+        const entries = getFilteredEntries();
+        const allChecked = entries.length > 0 && entries.every((e) => cur.selectedKeys.has(e.key));
+        if (allChecked) cur.selectedKeys.clear();
+        else entries.forEach((e) => cur.selectedKeys.add(e.key));
+        renderTableBody();
+      };
+      thChk.appendChild(selectAllChk);
+      tr.appendChild(thChk);
+
+      const thNum = document.createElement('th');
+      thNum.textContent = '#';
+      tr.appendChild(thNum);
+
+      p.columns.forEach((col) => {
+        const th = document.createElement('th');
+        const title = document.createElement('div');
+        title.className = 'th-title';
+        const sortMark = p.sortCol === col ? (p.sortDir === 'asc' ? ' ↑' : p.sortDir === 'desc' ? ' ↓' : '') : '';
+        title.innerHTML = '<span>' + col + '</span><span>' + sortMark + '</span>';
+        title.onclick = () => {
+          const cur = getProj();
+          if (cur.sortCol !== col) { cur.sortCol = col; cur.sortDir = 'asc'; }
+          else if (cur.sortDir === 'asc') { cur.sortDir = 'desc'; }
+          else { cur.sortCol = null; cur.sortDir = null; }
+          renderGridStructure();
+          renderTableBody();
+        };
+        th.appendChild(title);
+
+        const filterInput = document.createElement('input');
+        filterInput.type = 'text';
+        filterInput.className = 'col-filter';
+        filterInput.placeholder = 'Filtrar ' + col + '...';
+        filterInput.value = p.colFilters[col] || '';
+        filterInput.addEventListener('input', (e) => {
+          getProj().colFilters[col] = e.target.value;
+          renderTableBody();
+        });
+        th.appendChild(filterInput);
+        tr.appendChild(th);
+      });
+
+      const thAct = document.createElement('th');
+      thAct.className = 'actions-col';
+      thAct.textContent = 'Ações';
+      tr.appendChild(thAct);
+
+      thead.appendChild(tr);
+      table.appendChild(thead);
+      const tbody = document.createElement('tbody');
+      tbody.id = 'gridBody';
+      table.appendChild(tbody);
+      wrap.appendChild(table);
+      contentEl.innerHTML = '';
+      contentEl.appendChild(wrap);
+    }
+
+    function renderTableBody() {
+      const p = getProj();
+      const tbody = document.getElementById('gridBody');
+      const counterEl = document.getElementById('rowCounter');
+      const selBar = document.getElementById('selectionBar');
+      const selCount = document.getElementById('selectionCount');
+      const editSelBtn = document.getElementById('editSelectedBtn');
+      const entries = getFilteredEntries();
+
+      const totalLabel = p.totalCount !== null ? p.totalCount + ' total' : p.rows.length + ' carregados';
+      counterEl.textContent = entries.length + ' exibidos · ' + totalLabel;
+
+      if (p.selectedKeys.size > 0) {
+        selBar.classList.add('open');
+        selCount.textContent = p.selectedKeys.size + ' linha(s) marcada(s)';
+        editSelBtn.style.display = p.selectedKeys.size === 1 ? 'inline-block' : 'none';
+      } else {
+        selBar.classList.remove('open');
+      }
+
+      const selectAll = document.getElementById('selectAllChk');
+      if (selectAll) {
+        selectAll.checked = entries.length > 0 && entries.every((e) => p.selectedKeys.has(e.key));
+      }
+
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (entries.length === 0) {
+        const emptyTr = document.createElement('tr');
+        const emptyTd = document.createElement('td');
+        emptyTd.colSpan = p.columns.length + 3;
+        emptyTd.textContent = 'Nenhum registro corresponde aos filtros digitados.';
+        emptyTd.style.textAlign = 'center';
+        emptyTd.style.padding = '24px';
+        emptyTd.style.color = 'var(--muted)';
+        emptyTr.appendChild(emptyTd);
+        tbody.appendChild(emptyTr);
+        return;
+      }
+
+      entries.forEach(({ row, key }, idx) => {
+        const tr = document.createElement('tr');
+        if (p.selectedKeys.has(key)) tr.className = 'selected';
+
+        /* Checkbox fixa à esquerda na linha */
+        const tdChk = document.createElement('td');
+        tdChk.className = 'chk-col';
+        const chk = document.createElement('input');
+        chk.type = 'checkbox';
+        chk.checked = p.selectedKeys.has(key);
+        chk.onchange = () => {
+          const cur = getProj();
+          if (chk.checked) cur.selectedKeys.add(key);
+          else cur.selectedKeys.delete(key);
+          renderTableBody();
+        };
+        tdChk.appendChild(chk);
+        tr.appendChild(tdChk);
+
+        const tdIdx = document.createElement('td');
+        tdIdx.className = 'num-val';
+        tdIdx.textContent = String((p.fetchAll ? 0 : p.offset) + idx + 1);
+        tr.appendChild(tdIdx);
+
+        p.columns.forEach((col) => {
+          const td = document.createElement('td');
+          const val = row[col];
+          if (val === null || val === undefined) {
+            td.innerHTML = '<span class="null-val">null</span>';
+          } else if (typeof val === 'number') {
+            td.className = 'num-val';
+            td.textContent = String(val);
+          } else if (typeof val === 'object') {
+            td.className = 'num-val';
+            td.textContent = JSON.stringify(val);
+            td.title = JSON.stringify(val, null, 2);
+          } else {
+            td.textContent = String(val);
+            td.title = String(val);
+          }
+          tr.appendChild(td);
+        });
+
+        const tdAct = document.createElement('td');
+        tdAct.className = 'actions-col';
+        if (p.confirmDeleteKey === key) {
+          const yesBtn = document.createElement('button');
+          yesBtn.type = 'button';
+          yesBtn.className = 'icon-btn danger';
+          yesBtn.textContent = 'Confirmar';
+          yesBtn.onclick = async () => {
+            await deleteRowInSupabase(row);
+            getProj().confirmDeleteKey = null;
+          };
+          const noBtn = document.createElement('button');
+          noBtn.type = 'button';
+          noBtn.className = 'icon-btn';
+          noBtn.textContent = 'Não';
+          noBtn.onclick = () => { getProj().confirmDeleteKey = null; renderTableBody(); };
+          tdAct.appendChild(yesBtn);
+          tdAct.appendChild(noBtn);
+        } else {
+          const editBtn = document.createElement('button');
+          editBtn.type = 'button';
+          editBtn.className = 'icon-btn';
+          editBtn.textContent = '✎';
+          editBtn.title = 'Editar';
+          editBtn.onclick = () => openHeaderEditForm(key, row);
+          const delBtn = document.createElement('button');
+          delBtn.type = 'button';
+          delBtn.className = 'icon-btn danger';
+          delBtn.textContent = '🗑';
+          delBtn.title = 'Excluir';
+          delBtn.onclick = () => { getProj().confirmDeleteKey = key; renderTableBody(); };
+          tdAct.appendChild(editBtn);
+          tdAct.appendChild(delBtn);
+        }
+        tr.appendChild(tdAct);
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openHeaderEditForm(key, row) {
+      const p = getProj();
+      p.formMode = 'edit';
+      p.selectedKeys.clear();
+      p.selectedKeys.add(key);
+      p.editingRow = row;
+      p.pkCol = getPkCol(row);
+
+      document.getElementById('editTitle').textContent = 'Editar registro em ' + p.activeTable;
+      document.getElementById('editSubtitle').textContent = p.pkCol ? p.pkCol + ' = ' + row[p.pkCol] : 'Linha selecionada';
+      document.getElementById('editSubmitBtn').textContent = 'Atualizar no Supabase';
+      document.getElementById('editDeleteBtn').style.display = 'inline-block';
+
+      const grid = document.getElementById('editGrid');
+      grid.innerHTML = '';
+      p.columns.forEach((col) => {
+        const wrap = document.createElement('div');
+        const lbl = document.createElement('label');
+        lbl.className = 'field-label';
+        lbl.style.fontSize = '12px';
+        lbl.style.fontWeight = '600';
+        lbl.style.display = 'block';
+        lbl.style.marginBottom = '4px';
+        lbl.textContent = col + (col === p.pkCol ? ' (chave)' : '');
+        wrap.appendChild(lbl);
+
+        const val = row[col];
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.name = col;
+        inp.disabled = col === p.pkCol;
+        inp.value = val === null || val === undefined ? '' : typeof val === 'object' ? JSON.stringify(val) : String(val);
+        wrap.appendChild(inp);
+        grid.appendChild(wrap);
+      });
+
+      document.getElementById('editPanel').classList.add('open');
+      renderTableBody();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function openCreateForm() {
+      const p = getProj();
+      if (p.columns.length === 0) {
+        showFeedback('Carregue uma tabela com colunas conhecidas para inserir registros.', 'error');
+        return;
+      }
+      p.formMode = 'create';
+      p.editingRow = null;
+      document.getElementById('editTitle').textContent = 'Novo registro em ' + p.activeTable;
+      document.getElementById('editSubtitle').textContent = 'Campos vazios usam o valor padrão do banco';
+      document.getElementById('editSubmitBtn').textContent = 'Inserir no Supabase';
+      document.getElementById('editDeleteBtn').style.display = 'none';
+
+      const grid = document.getElementById('editGrid');
+      grid.innerHTML = '';
+      p.columns.forEach((col) => {
+        const wrap = document.createElement('div');
+        const lbl = document.createElement('label');
+        lbl.style.fontSize = '12px';
+        lbl.style.fontWeight = '600';
+        lbl.style.display = 'block';
+        lbl.style.marginBottom = '4px';
+        lbl.textContent = col;
+        wrap.appendChild(lbl);
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.name = col;
+        inp.placeholder = 'Opcional...';
+        wrap.appendChild(inp);
+        grid.appendChild(wrap);
+      });
+      document.getElementById('editPanel').classList.add('open');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function submitRecordForm(e) {
+      e.preventDefault();
+      const p = getProj();
+      const inputs = document.querySelectorAll('#editGrid input');
+
+      if (p.formMode === 'create') {
+        const payload = {};
+        inputs.forEach((inp) => {
+          const val = inp.value.trim();
+          if (val !== '') payload[inp.name] = inp.value;
+        });
+        try {
+          const res = await fetch(p.cfg.restUrl + encodeURIComponent(p.activeTable), {
+            method: 'POST',
+            headers: buildHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json().catch(() => []);
+          if (!res.ok) {
+            showFeedback('Erro ao inserir (HTTP ' + res.status + '): ' + (data.message || 'Falha de permissão'), 'error');
+            return;
+          }
+          showFeedback('Registro inserido no Supabase com sucesso.', 'ok');
+          document.getElementById('editPanel').classList.remove('open');
+          await loadTableData();
+        } catch (err) {
+          showFeedback('Erro de rede ao inserir: ' + err.message, 'error');
+        }
+        return;
+      }
+
+      if (!p.editingRow || !p.pkCol) return;
+      const updates = {};
+      inputs.forEach((inp) => {
+        const col = inp.name;
+        if (col === p.pkCol) return;
+        const orig = p.editingRow[col];
+        let val = inp.value;
+        if (typeof orig === 'number') val = val.trim() === '' ? null : Number(val);
+        else if (typeof orig === 'boolean') val = val.trim().toLowerCase() === 'true';
+        else if (typeof orig === 'object' && orig !== null) { try { val = JSON.parse(val); } catch {} }
+        else if (orig === null && val === '') val = null;
+        updates[col] = val;
+      });
+
+      const filter = encodeURIComponent(p.pkCol) + '=eq.' + encodeURIComponent(String(p.editingRow[p.pkCol]));
+      const url = p.cfg.restUrl + encodeURIComponent(p.activeTable) + '?' + filter;
+      try {
+        const res = await fetch(url, {
+          method: 'PATCH',
+          headers: buildHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
+          body: JSON.stringify(updates)
+        });
+        const data = await res.json().catch(() => []);
+        if (!res.ok) {
+          showFeedback('Erro ao atualizar (HTTP ' + res.status + '): ' + (data.message || 'Falha na permissão/RLS'), 'error');
+          return;
+        }
+        if (!Array.isArray(data) || data.length === 0) {
+          showFeedback('Nenhuma linha atualizada. Verifique o token ou política RLS.', 'error');
+          return;
+        }
+        showFeedback('Linha atualizada no Supabase com sucesso.', 'ok');
+        document.getElementById('editPanel').classList.remove('open');
+        p.editingRow = null;
+        await loadTableData();
+      } catch (err) {
+        showFeedback('Erro de rede ao atualizar: ' + err.message, 'error');
+      }
+    }
+
+    async function deleteRowInSupabase(row) {
+      const p = getProj();
+      const pk = getPkCol(row);
+      if (!pk) return;
+      const filter = encodeURIComponent(pk) + '=eq.' + encodeURIComponent(String(row[pk]));
+      const url = p.cfg.restUrl + encodeURIComponent(p.activeTable) + '?' + filter;
+      try {
+        const res = await fetch(url, {
+          method: 'DELETE',
+          headers: buildHeaders({ Prefer: 'return=representation' })
+        });
+        const data = await res.json().catch(() => []);
+        if (!res.ok) {
+          showFeedback('Erro ao excluir (HTTP ' + res.status + '): ' + (data.message || 'Falha na permissão/RLS'), 'error');
+          return;
+        }
+        if (!Array.isArray(data) || data.length === 0) {
+          showFeedback('Nenhuma linha excluída. Verifique o token ou política RLS.', 'error');
+          return;
+        }
+        showFeedback('Linha excluída do Supabase com sucesso.', 'ok');
+        p.selectedKeys.clear();
+        document.getElementById('editPanel').classList.remove('open');
+        p.editingRow = null;
+        await loadTableData();
+      } catch (err) {
+        showFeedback('Erro de rede ao excluir: ' + err.message, 'error');
+      }
+    }
+
+    function switchProjectTab(newKey) {
+      if (!projectStates[newKey] || newKey === currentProjectKey) return;
+      currentProjectKey = newKey;
+      localStorage.setItem(STORAGE_ACTIVE_PROJECT_KEY, currentProjectKey);
+
+      const p = getProj();
+      document.getElementById('searchInput').value = p.search;
+      document.getElementById('limitSelect').value = p.fetchAll ? 'ALL' : String(p.limit);
+      document.getElementById('newTableInput').value = '';
+      document.getElementById('editPanel').classList.remove('open');
+
+      applyProjectThemeAndHeader();
+      updateTokenUI();
+      renderTableSelector();
+
+      if (!p.discoveredOnce) {
+        discoverAllTables(newKey);
+      } else {
+        loadTableData(newKey);
+      }
+    }
+
+    document.getElementById('tabBtnManut').addEventListener('click', () => switchProjectTab('manut'));
+    document.getElementById('tabBtnFaedPnae').addEventListener('click', () => switchProjectTab('faed_pnae'));
+
+    document.getElementById('themeToggleBtn').addEventListener('click', () => {
+      uiState.darkMode = !uiState.darkMode;
+      localStorage.setItem(STORAGE_DARK_MODE_KEY, String(uiState.darkMode));
+      applyProjectThemeAndHeader();
+    });
+
+    document.getElementById('fontDecBtn').addEventListener('click', () => {
+      const p = getProj();
+      if (p.tableFontSize > 10) {
+        p.tableFontSize -= 1;
+        localStorage.setItem(p.keys.fontSizeKey, String(p.tableFontSize));
+        applyTableFontSize();
+      }
+    });
+
+    document.getElementById('fontIncBtn').addEventListener('click', () => {
+      const p = getProj();
+      if (p.tableFontSize < 24) {
+        p.tableFontSize += 1;
+        localStorage.setItem(p.keys.fontSizeKey, String(p.tableFontSize));
+        applyTableFontSize();
+      }
+    });
+
+    document.getElementById('toggleSidebarBtn').addEventListener('click', () => {
+      uiState.sidebarCollapsed = !uiState.sidebarCollapsed;
+      localStorage.setItem(STORAGE_SIDEBAR_KEY, String(uiState.sidebarCollapsed));
+      updateSidebarUI();
+    });
+
+    document.getElementById('toggleSavedListBtn').addEventListener('click', () => {
+      uiState.savedListCollapsed = !uiState.savedListCollapsed;
+      localStorage.setItem(STORAGE_SAVED_COLLAPSED_KEY, String(uiState.savedListCollapsed));
+      updateSidebarUI();
+    });
+
+    document.getElementById('filterSavedInput').addEventListener('input', (e) => {
+      uiState.savedFilter = e.target.value;
+      renderTableSelector();
+    });
+
+    document.getElementById('toggleTokenVisBtn').addEventListener('click', () => {
+      const inp = document.getElementById('customTokenInput');
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+    });
+
+    document.getElementById('tokenForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const p = getProj();
+      p.customToken = document.getElementById('customTokenInput').value.trim();
+      p.rememberToken = document.getElementById('rememberTokenChk').checked;
+      localStorage.setItem(p.keys.rememberTokenKey, String(p.rememberToken));
+      if (p.rememberToken && p.customToken) localStorage.setItem(p.keys.tokenKey, p.customToken);
+      else localStorage.removeItem(p.keys.tokenKey);
+      updateTokenUI();
+      await discoverAllTables();
+    });
+
+    document.getElementById('clearTokenBtn').addEventListener('click', async () => {
+      const p = getProj();
+      p.customToken = '';
+      localStorage.removeItem(p.keys.tokenKey);
+      updateTokenUI();
+      await discoverAllTables();
+    });
+
+    document.getElementById('tableSelect').addEventListener('change', (e) => selectTable(e.target.value));
+    document.getElementById('editForm').addEventListener('submit', submitRecordForm);
+    document.getElementById('newRowBtn').addEventListener('click', openCreateForm);
+    document.getElementById('closeEditBtn').addEventListener('click', () => document.getElementById('editPanel').classList.remove('open'));
+    document.getElementById('cancelEditBtn').addEventListener('click', () => document.getElementById('editPanel').classList.remove('open'));
+    document.getElementById('editDeleteBtn').addEventListener('click', () => {
+      const p = getProj();
+      if (p.editingRow) deleteRowInSupabase(p.editingRow);
+    });
+
+    document.getElementById('editSelectedBtn').addEventListener('click', () => {
+      const p = getProj();
+      const first = getFilteredEntries().find((e) => p.selectedKeys.has(e.key));
+      if (first) openHeaderEditForm(first.key, first.row);
+    });
+    document.getElementById('deleteSelectedBtn').addEventListener('click', async () => {
+      const p = getProj();
+      const selected = getFilteredEntries().filter((e) => p.selectedKeys.has(e.key));
+      for (const item of selected) await deleteRowInSupabase(item.row);
+    });
+    document.getElementById('clearSelectionBtn').addEventListener('click', () => {
+      getProj().selectedKeys.clear();
+      renderTableBody();
+    });
+
+    document.getElementById('addTableForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const p = getProj();
+      const input = document.getElementById('newTableInput');
+      const msgEl = document.getElementById('validateMsg');
+      const names = Array.from(new Set(input.value.split(/[\s,;]+/).map((s) => s.trim()).filter(Boolean)));
+      if (names.length === 0) return;
+      p.validateMsg = 'Validando ' + names.length + ' tabela(s)...';
+      msgEl.textContent = p.validateMsg;
+      let lastValid = null;
+      const failed = [];
+      for (const name of names) {
+        try {
+          const res = await fetch(p.cfg.restUrl + encodeURIComponent(name) + '?limit=1', {
+            headers: buildHeaders({ Prefer: 'count=exact' })
+          });
+          if (!res.ok) { failed.push(name); continue; }
+          const cr = res.headers.get('content-range');
+          const total = cr && cr.includes('/') ? Number(cr.split('/')[1]) : null;
+          const count = Number.isNaN(total) ? null : total;
+          if (!p.tables.some((t) => t.name === name)) {
+            p.tables.push({ name, count });
+          }
+          lastValid = name;
+        } catch { failed.push(name); }
+      }
+      p.tables.sort((a, b) => a.name.localeCompare(b.name));
+      saveJSON(p.keys.tablesKey, p.tables);
+      input.value = '';
+      if (lastValid) {
+        p.validateMsg = failed.length ? 'Adicionadas! Falharam: ' + failed.join(', ') : 'Tabela(s) salva(s) no navegador.';
+        msgEl.textContent = p.validateMsg;
+        selectTable(lastValid);
+      } else {
+        p.validateMsg = 'Não encontrada(s): ' + failed.join(', ');
+        msgEl.textContent = p.validateMsg;
+      }
+    });
+
+    /* Exportar Excel (.xlsx) */
+    document.getElementById('exportExcelBtn').addEventListener('click', () => {
+      const p = getProj();
+      const entries = getFilteredEntries();
+      if (!entries.length || !p.columns.length) {
+        showFeedback('Não há dados exibidos para exportar em Excel.', 'error');
+        return;
+      }
+
+      const sheetName = (p.activeTable || 'Dados').slice(0, 31).replace(/[\\/?*[\]:]/g, '_');
+      const fileName = p.cfg.key + '_' + p.activeTable + '_export.xlsx';
+
+      if (typeof XLSX !== 'undefined') {
+        const rowsData = entries.map((e) => {
+          const obj = {};
+          p.columns.forEach((col) => {
+            const val = e.row[col];
+            if (val === null || val === undefined) obj[col] = '';
+            else if (typeof val === 'object') obj[col] = JSON.stringify(val);
+            else obj[col] = val;
+          });
+          return obj;
+        });
+
+        const ws = XLSX.utils.json_to_sheet(rowsData, { header: p.columns });
+        ws['!cols'] = p.columns.map((col) => {
+          let maxLen = col.length;
+          rowsData.slice(0, 200).forEach((r) => {
+            const len = String(r[col] ?? '').length;
+            if (len > maxLen) maxLen = len;
+          });
+          return { wch: Math.min(Math.max(maxLen + 3, 12), 50) };
+        });
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+        XLSX.writeFile(wb, fileName);
+        showFeedback('Planilha Excel (' + fileName + ') exportada com sucesso.', 'ok');
+      } else {
+        /* Fallback caso a rede bloqueie a CDN do SheetJS */
+        const escXml = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        let xml = '<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>' +
+          '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' +
+          '<Worksheet ss:Name="' + escXml(sheetName) + '"><Table>';
+        xml += '<Row>' + p.columns.map((c) => '<Cell><Data ss:Type="String">' + escXml(c) + '</Data></Cell>').join('') + '</Row>';
+        entries.forEach((e) => {
+          xml += '<Row>' + p.columns.map((c) => {
+            const v = e.row[c];
+            if (v === null || v === undefined) return '<Cell><Data ss:Type="String"></Data></Cell>';
+            if (typeof v === 'number' && !Number.isNaN(v)) return '<Cell><Data ss:Type="Number">' + v + '</Data></Cell>';
+            const txt = typeof v === 'object' ? JSON.stringify(v) : String(v);
+            return '<Cell><Data ss:Type="String">' + escXml(txt) + '</Data></Cell>';
+          }).join('') + '</Row>';
+        });
+        xml += '</Table></Worksheet></Workbook>';
+        const blob = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = p.cfg.key + '_' + p.activeTable + '_export.xls';
+        a.click();
+        showFeedback('Planilha Excel exportada com sucesso.', 'ok');
+      }
+    });
+
+    /* Exportar CSV */
+    document.getElementById('exportCsvBtn').addEventListener('click', () => {
+      const p = getProj();
+      const entries = getFilteredEntries();
+      if (!entries.length || !p.columns.length) return;
+      const esc = (v) => {
+        if (v === null || v === undefined) return '';
+        const s = typeof v === 'object' ? JSON.stringify(v) : String(v);
+        const q = s.replace(/"/g, '""');
+        return /[",\n\r]/.test(q) ? '"' + q + '"' : q;
+      };
+      const csv = [p.columns.map(esc).join(','), ...entries.map((e) => p.columns.map((c) => esc(e.row[c])).join(','))].join('\r\n');
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = p.cfg.key + '_' + p.activeTable + '_export.csv';
+      a.click();
+    });
+
+    document.getElementById('scanBtn').addEventListener('click', () => discoverAllTables());
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      getProj().search = e.target.value;
+      renderTableBody();
+    });
+    document.getElementById('limitSelect').addEventListener('change', (e) => {
+      const p = getProj();
+      if (e.target.value === 'ALL') {
+        p.fetchAll = true;
+        p.offset = 0;
+      } else {
+        p.fetchAll = false;
+        p.limit = Number(e.target.value);
+        p.offset = 0;
+      }
+      loadTableData();
+    });
+    document.getElementById('refreshBtn').addEventListener('click', () => loadTableData());
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      const p = getProj();
+      if (!p.fetchAll && p.offset >= p.limit) { p.offset -= p.limit; loadTableData(); }
+    });
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      const p = getProj();
+      if (!p.fetchAll && p.rows.length === p.limit) { p.offset += p.limit; loadTableData(); }
+    });
+
+    applyProjectThemeAndHeader();
+    updateSidebarUI();
+    updateTokenUI();
+    renderTableSelector();
+    discoverAllTables();
+  </script>
+</body>
+</html>
